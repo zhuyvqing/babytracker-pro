@@ -138,7 +138,11 @@ const HomeView: React.FC = () => {
   const getLastFeedDisplay = () => {
     if (!lastFeedRecord) return { val: '--', suffix: '' };
 
-    const diffMs = now.getTime() - new Date(lastFeedRecord.startTime).getTime();
+    // For breast feeding, use endTime (when feeding ended); for bottle, use startTime
+    const referenceTime = lastFeedRecord.type === 'breast' && lastFeedRecord.endTime
+      ? new Date(lastFeedRecord.endTime)
+      : new Date(lastFeedRecord.startTime);
+    const diffMs = now.getTime() - referenceTime.getTime();
     const totalMins = Math.floor(diffMs / 60000);
 
     if (totalMins < 1) return { val: '刚刚', suffix: '' };

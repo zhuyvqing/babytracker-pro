@@ -8,6 +8,7 @@ interface TimerContextType {
   pauseTimer: () => void;
   resetTimer: () => void;
   setSelectedSide: (side: 'left' | 'right') => void;
+  toggleSide: () => void;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -19,14 +20,44 @@ export const useTimer = () => {
 };
 
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Load persisted state from localStorage
+  const loadPersistedState = () => {
+    try {
+      const saved = localStorage.getItem('timerState');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load timer state:', e);
+    }
+    return null;
+  };
+
+  const persistedState = loadPersistedState();
+
   // Core timer state
-  const [isRunning, setIsRunning] = useState(false);
-  const [startTimestamp, setStartTimestamp] = useState<number | null>(null);
-  const [pausedSeconds, setPausedSeconds] = useState(0);
-  const [selectedSide, setSelectedSide] = useState<'left' | 'right'>('left');
-  
+  const [isRunning, setIsRunning] = useState(persistedState?.isRunning || false);
+  const [startTimestamp, setStartTimestamp] = useState<number | null>(persistedState?.startTimestamp || null);
+  const [pausedSeconds, setPausedSeconds] = useState(persistedState?.pausedSeconds || 0);
+  const [selectedSide, setSelectedSide] = useState<'left' | 'right'>(persistedState?.selectedSide || 'left');
+
   // Trigger re-render for elapsed time calculation
   const [renderTrigger, setRenderTrigger] = useState(0);
+
+  // Persist timer state to localStorage
+  useEffect(() => {
+    const stateToSave = {
+      isRunning,
+      startTimestamp,
+      pausedSeconds,
+      selectedSide,
+    };
+    try {
+      localStorage.setItem('timerState', JSON.stringify(stateToSave));
+    } catch (e) {
+      console.error('Failed to save timer state:', e);
+    }
+  }, [isRunning, startTimestamp, pausedSeconds, selectedSide]);
 
   // Calculate elapsed seconds based on timestamp (not setInterval accumulation)
   const getElapsedSeconds = useCallback(() => {
@@ -89,6 +120,11 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setSelectedSide(side);
   }, []);
 
+  // Toggle to opposite side
+  const toggleSide = useCallback(() => {
+    setSelectedSide(prev => prev === 'left' ? 'right' : 'left');
+  }, []);
+
   // Calculate current elapsed seconds for display
   const elapsedSeconds = getElapsedSeconds();
 
@@ -102,6 +138,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         pauseTimer,
         resetTimer,
         setSelectedSide: handleSetSelectedSide,
+        toggleSide,
       }}
     >
       {children}

@@ -67,6 +67,7 @@ const HomeView: React.FC = () => {
     pauseTimer,
     resetTimer,
     setSelectedSide,
+    toggleSide,
   } = useTimer();
 
   // 检查登录状态的辅助函数
@@ -182,11 +183,16 @@ const HomeView: React.FC = () => {
   const handleSaveTimer = () => {
     if (seconds === 0) return;
 
+    // Calculate start time based on current time minus elapsed seconds
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - seconds * 1000);
+
     const newRecord: FeedRecord = {
       id: Date.now().toString(),
       type: 'breast',
       side: selectedSide,
-      startTime: new Date().toISOString(),
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
       durationMinutes: Math.max(1, Math.ceil(seconds / 60)),
       durationSeconds: seconds,
       date: '今天'
@@ -194,6 +200,7 @@ const HomeView: React.FC = () => {
 
     addRecord(newRecord);
     resetTimer();
+    toggleSide(); // Automatically switch to opposite side for next feeding
     showSaveFeedback();
   };
 

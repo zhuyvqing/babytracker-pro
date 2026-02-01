@@ -93,6 +93,7 @@ const StatsView: React.FC = memo(() => {
 
   // Bottle State
   const [bottleAmount, setBottleAmount] = useState<number>(0);
+  const [isSnack, setIsSnack] = useState<boolean>(false);
 
   // Diaper State
   const [diaperType, setDiaperType] = useState<'wet' | 'dirty' | 'mixed'>('wet');
@@ -105,6 +106,7 @@ const StatsView: React.FC = memo(() => {
   const [breastSide, setBreastSide] = useState<'left' | 'right'>('left');
   const [breastDuration, setBreastDuration] = useState<number>(0);
   const [breastSeconds, setBreastSeconds] = useState<number>(0);
+  const [breastEndTime, setBreastEndTime] = useState<string>('');
 
   // Helper for date equality
   const isSameDay = (d1: Date, d2: Date) => {
@@ -239,6 +241,7 @@ const StatsView: React.FC = memo(() => {
 
     if (record.type === 'bottle') {
       setBottleAmount(record.amountMl || 0);
+      setIsSnack(record.isSnack || false);
     } else if (record.type === 'diaper') {
       setDiaperType(record.diaperType || 'wet');
       setDiaperAmount(record.diaperAmount || 'medium');
@@ -257,6 +260,17 @@ const StatsView: React.FC = memo(() => {
       } else {
         setBreastDuration(record.durationMinutes || 0);
         setBreastSeconds(0);
+      }
+
+      // Initialize breast end time
+      if (record.endTime) {
+        setBreastEndTime(new Date(record.endTime).toTimeString().slice(0, 5));
+      } else {
+        // Calculate end time from start time + duration
+        const startDate = new Date(record.startTime);
+        const durationSec = record.durationSeconds !== undefined ? record.durationSeconds : (record.durationMinutes || 0) * 60;
+        const endDate = new Date(startDate.getTime() + durationSec * 1000);
+        setBreastEndTime(endDate.toTimeString().slice(0, 5));
       }
     } else if (record.type === 'pump') {
       setBottleAmount(record.amountMl || 0);
@@ -282,7 +296,7 @@ const StatsView: React.FC = memo(() => {
     };
 
     if (editingRecord.type === 'bottle') {
-      updatedRecord = { ...updatedRecord, amountMl: bottleAmount };
+      updatedRecord = { ...updatedRecord, amountMl: bottleAmount, isSnack: isSnack };
     } else if (editingRecord.type === 'diaper') {
       updatedRecord = {
         ...updatedRecord,
@@ -306,12 +320,24 @@ const StatsView: React.FC = memo(() => {
         }
       }
     } else if (editingRecord.type === 'breast') {
-      const totalSeconds = breastDuration * 60 + breastSeconds;
+      // Calculate duration from start and end times
+      const startD = new Date(newStartTime);
+      const endD = new Date(newStartTime);
+      if (breastEndTime) {
+        const [h, m] = breastEndTime.split(':').map(Number);
+        endD.setHours(h, m);
+        // Handle overnight
+        if (endD < startD) endD.setDate(endD.getDate() + 1);
+      }
+
+      const totalSeconds = Math.round((endD.getTime() - startD.getTime()) / 1000);
+
       updatedRecord = {
         ...updatedRecord,
         side: breastSide,
-        durationMinutes: Math.max(0, Math.ceil(totalSeconds / 60)), // Calculated based on seconds
-        durationSeconds: totalSeconds // Precise seconds
+        endTime: endD.toISOString(),
+        durationMinutes: Math.max(0, Math.ceil(totalSeconds / 60)),
+        durationSeconds: totalSeconds
       };
     } else if (editingRecord.type === 'pump') {
       updatedRecord = { ...updatedRecord, amountMl: bottleAmount };
@@ -405,9 +431,16 @@ const StatsView: React.FC = memo(() => {
         break;
     }
 
+    // Format time display - show range for breast and sleep records
+    let timeDisplay = new Date(record.startTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    if ((record.type === 'breast' || record.type === 'sleep') && record.endTime) {
+      const endTimeStr = new Date(record.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      timeDisplay = `${timeDisplay} - ${endTimeStr}`;
+    }
+
     return {
       title,
-      time: new Date(record.startTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+      time: timeDisplay,
       duration,
       icon,
       color
@@ -693,6 +726,20 @@ const StatsView: React.FC = memo(() => {
                 <button onClick={() => setBottleAmount(p => p + 10)} className="h-12 w-12 rounded-xl bg-surface-light border border-gray-200 dark:border-gray-700 dark:bg-surface-dark flex items-center justify-center text-slate-900 dark:text-white text-2xl">+</button>
               </div>
             </div>
+
+            {/* Snack Toggle */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/5">
+              <div className="flex flex-col">
+                <span className="text-sm text-slate-500 dark:text-gray-400 font-bold uppercase">是否为加餐</span>
+                <span className="text-xs text-slate-400 dark:text-gray-600">加餐不计入平均统计</span>
+              </div>
+              <button
+                onClick={() => setIsSnack(!isSnack)}
+                className={`relative w-12 h-7 rounded-full transition-colors duration-300 ${isSnack ? 'bg-primary' : 'bg-slate-200 dark:bg-white/10'}`}
+              >
+                <div className={`absolute top-1 size-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${isSnack ? 'translate-x-6' : 'translate-x-1'}`}></div>
+              </button>
+            </div>
           </div>
         </Modal>
       )}
@@ -800,14 +847,26 @@ const StatsView: React.FC = memo(() => {
           onDelete={handleDeleteRecord}
         >
           <div className="flex flex-col gap-4">
-            <div>
-              <label className="text-sm text-slate-500 dark:text-gray-400 font-bold uppercase mb-2 block">时间</label>
-              <input
-                type="time"
-                value={editStartTime}
-                onChange={(e) => setEditStartTime(e.target.value)}
-                className="w-full h-14 bg-surface-light dark:bg-surface-dark rounded-xl border-gray-200 dark:border-gray-700 text-slate-900 dark:text-white text-xl text-center focus:ring-primary focus:border-primary"
-              />
+            {/* Time Range: Start and End */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-slate-500 dark:text-gray-400 font-bold uppercase mb-2 block">开始时间</label>
+                <input
+                  type="time"
+                  value={editStartTime}
+                  onChange={(e) => setEditStartTime(e.target.value)}
+                  className="w-full h-14 bg-surface-light dark:bg-surface-dark rounded-xl border-gray-200 dark:border-gray-700 text-slate-900 dark:text-white text-xl text-center focus:ring-primary focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-500 dark:text-gray-400 font-bold uppercase mb-2 block">结束时间</label>
+                <input
+                  type="time"
+                  value={breastEndTime}
+                  onChange={(e) => setBreastEndTime(e.target.value)}
+                  className="w-full h-14 bg-surface-light dark:bg-surface-dark rounded-xl border-gray-200 dark:border-gray-700 text-slate-900 dark:text-white text-xl text-center focus:ring-primary focus:border-primary"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <button onClick={() => setBreastSide('left')} className={`h-14 rounded-xl font-bold border-2 transition-colors ${breastSide === 'left' ? 'bg-primary/20 border-primary text-primary' : 'bg-surface-light dark:bg-surface-dark border-transparent text-slate-500'}`}>左侧</button>

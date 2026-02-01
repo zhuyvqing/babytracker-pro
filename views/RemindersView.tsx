@@ -352,70 +352,74 @@ const RemindersView: React.FC = memo(() => {
               <label className="text-sm text-slate-500 dark:text-gray-400 font-bold uppercase mb-3 block">提醒间隔</label>
 
               <div className="flex flex-col gap-4">
-                {/* Hours Row - Vertical Stack */}
+                {/* Hours Row */}
                 <div className="flex flex-col gap-2">
                   <span className="text-slate-900 dark:text-white font-medium pl-1">小时</span>
-                  <div className="flex items-center bg-surface-light dark:bg-black/20 rounded-2xl border-2 border-primary/20 p-1 w-full">
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => {
                         const val = typeof delayHours === 'number' ? delayHours : (parseInt(delayHours) || 0);
                         setDelayHours(Math.max(0, val - 1));
                       }}
-                      className="size-12 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors border-r border-gray-100 dark:border-white/5"
+                      className="h-14 w-14 rounded-xl bg-surface-light border border-gray-200 dark:border-gray-700 dark:bg-surface-dark flex items-center justify-center text-slate-900 dark:text-white text-2xl font-bold hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all"
                     >-</button>
-                    <input
-                      type="number"
-                      value={delayHours}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '') setDelayHours('');
-                        else {
-                          const num = parseInt(val);
-                          if (!isNaN(num)) setDelayHours(Math.max(0, num));
-                        }
-                      }}
-                      className="flex-1 bg-transparent border-none text-center font-bold text-2xl p-0 focus:ring-0 text-slate-900 dark:text-white"
-                    />
+                    <div className="flex-1 h-14 bg-surface-light dark:bg-black/20 rounded-xl border-2 border-primary/20 flex items-center justify-center">
+                      <input
+                        type="number"
+                        value={delayHours}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') setDelayHours('');
+                          else {
+                            const num = parseInt(val);
+                            if (!isNaN(num)) setDelayHours(Math.max(0, num));
+                          }
+                        }}
+                        className="w-full h-full bg-transparent border-none text-center font-bold text-3xl p-0 focus:ring-0 text-slate-900 dark:text-white"
+                      />
+                    </div>
                     <button
                       onClick={() => {
                         const val = typeof delayHours === 'number' ? delayHours : (parseInt(delayHours) || 0);
                         setDelayHours(val + 1);
                       }}
-                      className="size-12 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors border-l border-gray-100 dark:border-white/5"
+                      className="h-14 w-14 rounded-xl bg-surface-light border border-gray-200 dark:border-gray-700 dark:bg-surface-dark flex items-center justify-center text-slate-900 dark:text-white text-2xl font-bold hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all"
                     >+</button>
                   </div>
                 </div>
 
-                {/* Minutes Row - Vertical Stack */}
+                {/* Minutes Row */}
                 <div className="flex flex-col gap-2">
                   <span className="text-slate-900 dark:text-white font-medium pl-1">分钟</span>
-                  <div className="flex items-center bg-surface-light dark:bg-black/20 rounded-2xl border-2 border-primary/20 p-1 w-full">
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => {
                         const val = typeof delayMinutes === 'number' ? delayMinutes : (parseInt(delayMinutes) || 0);
                         setDelayMinutes(Math.max(0, val - 10));
                       }}
-                      className="size-12 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors border-r border-gray-100 dark:border-white/5"
+                      className="h-14 w-14 rounded-xl bg-surface-light border border-gray-200 dark:border-gray-700 dark:bg-surface-dark flex items-center justify-center text-slate-900 dark:text-white text-2xl font-bold hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all"
                     >-</button>
-                    <input
-                      type="number"
-                      value={delayMinutes}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '') setDelayMinutes('');
-                        else {
-                          const num = parseInt(val);
-                          if (!isNaN(num)) setDelayMinutes(Math.max(0, num));
-                        }
-                      }}
-                      className="flex-1 bg-transparent border-none text-center font-bold text-2xl p-0 focus:ring-0 text-slate-900 dark:text-white"
-                    />
+                    <div className="flex-1 h-14 bg-surface-light dark:bg-black/20 rounded-xl border-2 border-primary/20 flex items-center justify-center">
+                      <input
+                        type="number"
+                        value={delayMinutes}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') setDelayMinutes('');
+                          else {
+                            const num = parseInt(val);
+                            if (!isNaN(num)) setDelayMinutes(Math.max(0, num));
+                          }
+                        }}
+                        className="w-full h-full bg-transparent border-none text-center font-bold text-3xl p-0 focus:ring-0 text-slate-900 dark:text-white"
+                      />
+                    </div>
                     <button
                       onClick={() => {
                         const val = typeof delayMinutes === 'number' ? delayMinutes : (parseInt(delayMinutes) || 0);
                         setDelayMinutes(val + 10);
                       }}
-                      className="size-12 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors border-l border-gray-100 dark:border-white/5"
+                      className="h-14 w-14 rounded-xl bg-surface-light border border-gray-200 dark:border-gray-700 dark:bg-surface-dark flex items-center justify-center text-slate-900 dark:text-white text-2xl font-bold hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all"
                     >+</button>
                   </div>
                 </div>
